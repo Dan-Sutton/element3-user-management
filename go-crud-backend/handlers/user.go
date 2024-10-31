@@ -27,6 +27,33 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(user)
 }
 
+func GetAllUsers(w http.ResponseWriter, r *http.Request) {
+    rows, err := db.DB.Query("SELECT id, first_name, surname, email, dob FROM users")
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var users []models.User
+    for rows.Next() {
+        var user models.User
+        err := rows.Scan(&user.ID, &user.FirstName, &user.Surname, &user.Email, &user.DOB)
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+        users = append(users, user)
+    }
+
+    if err = rows.Err(); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    json.NewEncoder(w).Encode(users)
+}
+
 func GetUser(w http.ResponseWriter, r *http.Request) {
     params := mux.Vars(r)
     id, _ := strconv.Atoi(params["id"])
